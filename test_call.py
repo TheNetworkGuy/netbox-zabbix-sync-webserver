@@ -159,26 +159,26 @@ if __name__ == "__main__":
     print("Test: Webhook with device filter only")
     send_webhook(data={"device_filter": {"name": "SW01N0"}})
 
-    print("\nTest: Update connect config (netbox_url)")
-    send_connect_config_update(data={"netbox_url": "http://127.0.0.1:8000"})
+    # print("\nTest: Update connect config (netbox_url)")
+    # send_connect_config_update(data={"netbox_url": "http://127.0.0.1:8000"})
 
-    print("\nTest: Update connect config (multiple values)")
-    send_connect_config_update(
-        data={
-            "netbox_url": "http://127.0.0.1:8000",
-            "netbox_token": "nbt_BjBywcft2V4Q.mDRZZu0fykC_lFov4ztvGaFBuHgCAiossHDjOZz-TbQJJAyJ9PwgafWSOGBsKhXW",
-            "zabbix_url": "http://127.0.0.1",
-            "zabbix_user": "Admin",
-            "zabbix_password": "zabbix",
-        }
-    )
+    # print("\nTest: Update connect config (multiple values)")
+    # send_connect_config_update(
+    #     data={
+    #         "netbox_url": "http://127.0.0.1:8000",
+    #         "netbox_token": "nbt_geXovN0NThHK.d8pHXcENlq7PQL3Vo6br8Pw0UdqZ038Y0NVrzTy0",
+    #         "zabbix_url": "http://127.0.0.1",
+    #         "zabbix_user": "Admin",
+    #         "zabbix_password": "zabbix",
+    #     }
+    # )
 
-    print("\nTest: Update sync config (clustering and template_cf)")
-    send_sync_config_update(
-        data={
-            "config": {
-                "clustering": "true",
-                "template_cf": "zbx_template",
-            }
-        }
-    )
+    # print("\nTest: Update sync config (clustering and template_cf)")
+    # send_sync_config_update(
+    #     data={
+    #         "config": {
+    #             "clustering": "true",
+    #             "template_cf": "zabx_template",
+    #         }
+    #     }
+    # )

@@ -19,6 +19,7 @@ app = FastAPI()
 # Module-level cache for Sync instance
 _sync_instance: Sync | None = None
 _sync_config_cache: dict | None = None
+_sync_connection_cache: dict | None = None
 
 
 def _convert_config_types(config_raw: dict) -> dict:
@@ -36,13 +37,22 @@ def _convert_config_types(config_raw: dict) -> dict:
     return converted
 
 
-def get_or_create_sync_instance() -> Sync:
+def get_or_create_sync_instance(
+    nb_url: str | None,
+    nb_token: str | None,
+    zbx_url: str | None,
+    zbx_user: str | None,
+    zbx_pass: str | None,
+    zbx_token: str | None,
+) -> Sync:
     """
     Get or create a Sync instance with current configuration.
     
     Caches the instance and recreates it only if the configuration has changed.
+    Connects once connection configuration is available, and reconnects only if
+    connection values change.
     """
-    global _sync_instance, _sync_config_cache
+    global _sync_instance, _sync_config_cache, _sync_connection_cache
     
     # Fetch current sync configuration
     sync_config_raw = store.get_all_sync_config()
@@ -53,16 +63,59 @@ def get_or_create_sync_instance() -> Sync:
         logger.info("Creating new Sync instance with config: %s", sync_config)
         _sync_instance = Sync(sync_config)
         _sync_config_cache = sync_config.copy()
+        _sync_connection_cache = None
+
+    connection_config = {
+        "netbox_url": nb_url,
+        "netbox_token": nb_token,
+        "zabbix_url": zbx_url,
+        "zabbix_user": zbx_user,
+        "zabbix_password": zbx_pass,
+        "zabbix_token": zbx_token,
+    }
+
+    if not nb_url or not nb_token or not zbx_url:
+        return _sync_instance
+    if not zbx_token and (not zbx_user or not zbx_pass):
+        return _sync_instance
+
+    if _sync_connection_cache != connection_config:
+        use_token_auth = bool(zbx_token)
+        zbx_auth_user = None if use_token_auth else zbx_user
+        zbx_auth_pass = None if use_token_auth else zbx_pass
+        zbx_auth_token = zbx_token if use_token_auth else None
+
+        logger.info(
+            "(Re)connecting Sync instance to NetBox/Zabbix using %s auth",
+            "token" if use_token_auth else "username/password",
+        )
+
+        _sync_instance.connect(
+            nb_url,
+            nb_token,
+            zbx_url,
+            zbx_user=zbx_auth_user,
+            zbx_pass=zbx_auth_pass,
+            zbx_token=zbx_auth_token,
+        )
+        _sync_connection_cache = connection_config.copy()
     
     return _sync_instance
 
 
 def invalidate_sync_instance() -> None:
     """Invalidate the cached Sync instance, forcing recreation on next use."""
-    global _sync_instance, _sync_config_cache
+    global _sync_instance, _sync_config_cache, _sync_connection_cache
     _sync_instance = None
     _sync_config_cache = None
+    _sync_connection_cache = None
     logger.info("Sync instance cache invalidated")
+
+
+def invalidate_sync_connection() -> None:
+    """Invalidate the cached Sync connection, forcing reconnect on next use."""
+    global _sync_connection_cache
+    _sync_connection_cache = None
 
 
 def warn_if_missing_secret() -> None:
@@ -97,20 +150,32 @@ def run_sync(event_id: str, device_filter: dict | None, vm_filter: dict | None):
         nb_token = store.get_config("netbox_token")
         zbx_url = store.get_config("zabbix_url")
         zbx_user = store.get_config("zabbix_user")
-        zbx_pass = store.get_config("zabbix_password") or store.get_config("zabbix_token")
-        
+        zbx_pass = store.get_config("zabbix_password")
+        zbx_token = store.get_config("zabbix_token")
+
         # Validate that all required config is available
-        if not all([nb_url, nb_token, zbx_url, zbx_user, zbx_pass]):
+        if not nb_url or not nb_token or not zbx_url:
             raise ValueError(
                 "Missing required connection configuration. "
                 "Please set all values via /connect_config endpoint"
             )
+        if not zbx_token and (not zbx_user or not zbx_pass):
+            raise ValueError(
+                "Missing required Zabbix authentication configuration. "
+                "Provide zabbix_token or zabbix_user + zabbix_password"
+            )
         
-        # Get or create Sync instance with current configuration
-        nbsync = get_or_create_sync_instance()
+        # Get or create Sync instance with current configuration and connect once
+        nbsync = get_or_create_sync_instance(
+            nb_url,
+            nb_token,
+            zbx_url,
+            zbx_user,
+            zbx_pass,
+            zbx_token,
+        )
         
-        # Connect and run sync with filters
-        nbsync.connect(nb_url, nb_token, zbx_url, zbx_user, zbx_pass)
+        # Run sync with filters
         nbsync.start(
             device_filter=device_filter,
             vm_filter=vm_filter
@@ -222,6 +287,11 @@ async def update_connection_config(
             )
         
         logger.info("Successfully updated configuration keys: %s", updated_keys)
+
+        invalidate_sync_connection()
+        logger.info(
+            "Connection config changed in DB; Sync will reconnect on next /sync"
+        )
         
         return ConnectionConfigResponse(
             status="success",
