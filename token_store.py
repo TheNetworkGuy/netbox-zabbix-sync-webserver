@@ -4,7 +4,7 @@ import logging
 import os
 import secrets
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from cryptography.fernet import Fernet, InvalidToken
 
@@ -128,7 +128,7 @@ class SecretStore:
             with self._connect() as conn:
                 conn.execute(
                     "INSERT INTO webhook_secrets (secret, created_at) VALUES (?, ?)",
-                    (secret, datetime.utcnow().isoformat()),
+                    (secret, datetime.now(timezone.utc).isoformat()),
                 )
                 conn.commit()
             self._secret_cache = secret
@@ -178,7 +178,7 @@ class SecretStore:
         
         try:
             encrypted_value = self._encrypt(value)
-            now_iso = datetime.utcnow().isoformat()
+            now_iso = datetime.now(timezone.utc).isoformat()
             
             with self._connect() as conn:
                 # Try to update first
@@ -266,7 +266,7 @@ class SecretStore:
             raise SecretStoreError("Sync config key and value cannot be empty")
         
         try:
-            now_iso = datetime.utcnow().isoformat()
+            now_iso = datetime.now(timezone.utc).isoformat()
             
             with self._connect() as conn:
                 # Try to update first

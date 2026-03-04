@@ -80,11 +80,11 @@ class TestWebhookSecret:
         # Manually insert a second secret without going through
         # generate_and_store_secret (which updates the cache itself).
         import sqlite3
-        from datetime import datetime
+        from datetime import datetime, timezone
         conn = sqlite3.connect(store.db_path)
         conn.execute(
             "INSERT INTO webhook_secrets (secret, created_at) VALUES (?, ?)",
-            ("manual_secret", datetime.utcnow().isoformat()),
+            ("manual_secret", datetime.now(timezone.utc).isoformat()),
         )
         conn.commit()
         conn.close()

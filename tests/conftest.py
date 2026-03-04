@@ -13,6 +13,7 @@ from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 
 from token_store import SecretStore
+from sync_manager import SyncManager
 
 
 # ---------------------------------------------------------------------------
@@ -46,6 +47,12 @@ def store_with_secret(store):
     return store
 
 
+@pytest.fixture()
+def sync_manager(store_with_secret):
+    """Return a fresh SyncManager tied to the test store."""
+    return SyncManager(store_with_secret)
+
+
 # ---------------------------------------------------------------------------
 # FastAPI TestClient with security dependency overridden
 # ---------------------------------------------------------------------------
@@ -68,16 +75,14 @@ def client(store_with_secret, monkeypatch):
     FastAPI TestClient with:
     - security dependency bypassed
     - Sync class mocked (no real NetBox/Zabbix needed)
-    - module-level caches reset between tests
+    - dependencies properly set
     """
-    # Reset module-level caches before importing app
     import main as main_mod
-    main_mod._sync_instance = None
-    main_mod._sync_config_cache = None
-    main_mod._sync_connection_cache = None
+    import routes
 
-    # Patch the module-level `store` used everywhere in main
-    monkeypatch.setattr(main_mod, "store", store_with_secret)
+    # Set up dependencies for routes
+    manager = SyncManager(store_with_secret)
+    routes.set_dependencies(store_with_secret, manager)
 
     # Bypass webhook security
     from middleware import webhook_security_dependency
@@ -87,6 +92,8 @@ def client(store_with_secret, monkeypatch):
         yield tc
 
     main_mod.app.dependency_overrides.clear()
+    routes._store = None
+    routes._sync_manager = None
 
 
 # ---------------------------------------------------------------------------

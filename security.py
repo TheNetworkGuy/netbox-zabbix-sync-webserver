@@ -96,7 +96,7 @@ def verify_hmac_signature(
         ).hexdigest()
         return hmac.compare_digest(signature, expected_signature)
     except Exception as e:
-        logger.error(f"Signature verification error: {e}")
+        logger.error("Signature verification error: %s", e)
         return False
 
 
@@ -109,12 +109,14 @@ def verify_timestamp_window(timestamp_str: str, window_seconds: int = config.TIM
         
         if time_diff > window_seconds:
             logger.warning(
-                f"Timestamp outside window: diff={time_diff}s, window={window_seconds}s"
+                "Timestamp outside window: diff=%ss, window=%ss",
+                time_diff,
+                window_seconds,
             )
             return False
         return True
     except (ValueError, TypeError) as e:
-        logger.error(f"Timestamp parsing error: {e}")
+        logger.error("Timestamp parsing error: %s", e)
         return False
 
 
@@ -124,7 +126,7 @@ def is_ip_whitelisted(ip: str, whitelist: list = config.IP_WHITELIST) -> bool:
         ip_addr = IPv4Address(ip)
         return any(ip_addr in network for network in whitelist)
     except Exception as e:
-        logger.error(f"IP whitelisting error: {e}")
+        logger.error("IP whitelisting error: %s", e)
         return False
 
 
@@ -146,14 +148,12 @@ async def validate_webhook_security(request: Request, body: bytes) -> dict:
     Returns: dict with validation results
     Raises: HTTPException if validation fails
     """
-    errors = []
     client_ip = get_client_ip(request)
     
     # 1. Check body size
     if len(body) > config.MAX_BODY_SIZE:
         error_msg = f"Body too large: {len(body)} > {config.MAX_BODY_SIZE}"
-        logger.error(f"Security: {error_msg} from {client_ip}")
-        errors.append(error_msg)
+        logger.error("Security: %s from %s", error_msg, client_ip)
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=error_msg if config.DEBUG_MODE else "Request body too large"
@@ -162,8 +162,7 @@ async def validate_webhook_security(request: Request, body: bytes) -> dict:
     # 2. Check IP whitelist
     if not is_ip_whitelisted(client_ip):
         error_msg = f"IP not whitelisted: {client_ip}"
-        logger.warning(f"Security: {error_msg}")
-        errors.append(error_msg)
+        logger.warning("Security: %s", error_msg)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=error_msg if config.DEBUG_MODE else "Access denied"
@@ -172,8 +171,7 @@ async def validate_webhook_security(request: Request, body: bytes) -> dict:
     # 3. Check rate limit
     if rate_limiter.is_rate_limited(client_ip):
         error_msg = f"Rate limit exceeded for IP: {client_ip}"
-        logger.warning(f"Security: {error_msg}")
-        errors.append(error_msg)
+        logger.warning("Security: %s", error_msg)
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail=error_msg if config.DEBUG_MODE else "Rate limit exceeded"
@@ -186,7 +184,7 @@ async def validate_webhook_security(request: Request, body: bytes) -> dict:
     
     if not signature:
         error_msg = f"Missing {config.HEADER_SIGNATURE} header"
-        logger.error(f"Security: {error_msg} from {client_ip}")
+        logger.error("Security: %s from %s", error_msg, client_ip)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error_msg if config.DEBUG_MODE else "Invalid request"
@@ -194,7 +192,7 @@ async def validate_webhook_security(request: Request, body: bytes) -> dict:
     
     if not timestamp:
         error_msg = f"Missing {config.HEADER_TIMESTAMP} header"
-        logger.error(f"Security: {error_msg} from {client_ip}")
+        logger.error("Security: %s from %s", error_msg, client_ip)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error_msg if config.DEBUG_MODE else "Invalid request"
@@ -202,7 +200,7 @@ async def validate_webhook_security(request: Request, body: bytes) -> dict:
     
     if not event_id:
         error_msg = f"Missing {config.HEADER_EVENT_ID} header"
-        logger.error(f"Security: {error_msg} from {client_ip}")
+        logger.error("Security: %s from %s", error_msg, client_ip)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error_msg if config.DEBUG_MODE else "Invalid request"
@@ -211,7 +209,7 @@ async def validate_webhook_security(request: Request, body: bytes) -> dict:
     # 5. Verify timestamp window
     if not verify_timestamp_window(timestamp):
         error_msg = f"Timestamp outside acceptable window from {client_ip}"
-        logger.warning(f"Security: {error_msg}")
+        logger.warning("Security: %s", error_msg)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=error_msg if config.DEBUG_MODE else "Request expired"
@@ -220,7 +218,7 @@ async def validate_webhook_security(request: Request, body: bytes) -> dict:
     # 6. Verify HMAC signature
     if not verify_hmac_signature(timestamp, signature, body):
         error_msg = f"Invalid signature from {client_ip}"
-        logger.error(f"Security: {error_msg}")
+        logger.error("Security: %s", error_msg)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=error_msg if config.DEBUG_MODE else "Unauthorized"
@@ -229,13 +227,13 @@ async def validate_webhook_security(request: Request, body: bytes) -> dict:
     # 7. Check for duplicate event (replay attack)
     if event_dedup.is_duplicate(event_id):
         error_msg = f"Duplicate event ID detected: {event_id} from {client_ip}"
-        logger.warning(f"Security: {error_msg}")
+        logger.warning("Security: %s", error_msg)
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=error_msg if config.DEBUG_MODE else "Duplicate event"
         )
     
-    logger.info(f"Security validation passed for {event_id} from {client_ip}")
+    logger.info("Security validation passed for %s from %s", event_id, client_ip)
     
     return {
         "client_ip": client_ip,

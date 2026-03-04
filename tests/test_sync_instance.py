@@ -13,39 +13,27 @@ from unittest.mock import MagicMock, patch, call
 
 import pytest
 
-
-@pytest.fixture(autouse=True)
-def _reset_main_caches():
-    """Reset module-level caches before each test."""
-    import main as m
-    m._sync_instance = None
-    m._sync_config_cache = None
-    m._sync_connection_cache = None
-    yield
-    m._sync_instance = None
-    m._sync_config_cache = None
-    m._sync_connection_cache = None
+from sync_manager import SyncManager
 
 
 # ── Helper ────────────────────────────────────────────────────────────────────
 
 def _patch_sync_class():
-    """Patch the Sync class used inside main so no real connections happen."""
-    return patch("main.Sync")
+    """Patch the Sync class used inside sync_manager so no real connections happen."""
+    return patch("sync_manager.Sync")
 
 
 # ── 3. connect() not called when connection details are missing ──────────────
 
 class TestConnectNotCalledWithoutConfig:
 
-    def test_missing_netbox_url(self, store_with_secret, monkeypatch):
+    def test_missing_netbox_url(self, store_with_secret):
         """connect() must NOT be called when netbox_url is missing."""
-        import main as m
-        monkeypatch.setattr(m, "store", store_with_secret)
+        manager = SyncManager(store_with_secret)
 
         with _patch_sync_class() as MockSync:
             instance = MockSync.return_value
-            m.get_or_create_sync_instance(
+            manager.get_or_create_sync_instance(
                 nb_url=None,
                 nb_token="tok",
                 zbx_url="http://zbx",
@@ -55,14 +43,13 @@ class TestConnectNotCalledWithoutConfig:
             )
             instance.connect.assert_not_called()
 
-    def test_missing_zabbix_auth(self, store_with_secret, monkeypatch):
+    def test_missing_zabbix_auth(self, store_with_secret):
         """connect() must NOT be called when neither token nor user+pass exist."""
-        import main as m
-        monkeypatch.setattr(m, "store", store_with_secret)
+        manager = SyncManager(store_with_secret)
 
         with _patch_sync_class() as MockSync:
             instance = MockSync.return_value
-            m.get_or_create_sync_instance(
+            manager.get_or_create_sync_instance(
                 nb_url="http://nb",
                 nb_token="tok",
                 zbx_url="http://zbx",
@@ -72,14 +59,13 @@ class TestConnectNotCalledWithoutConfig:
             )
             instance.connect.assert_not_called()
 
-    def test_missing_zabbix_password_only(self, store_with_secret, monkeypatch):
+    def test_missing_zabbix_password_only(self, store_with_secret):
         """connect() must NOT be called when user is set but password is missing."""
-        import main as m
-        monkeypatch.setattr(m, "store", store_with_secret)
+        manager = SyncManager(store_with_secret)
 
         with _patch_sync_class() as MockSync:
             instance = MockSync.return_value
-            m.get_or_create_sync_instance(
+            manager.get_or_create_sync_instance(
                 nb_url="http://nb",
                 nb_token="tok",
                 zbx_url="http://zbx",
@@ -94,14 +80,13 @@ class TestConnectNotCalledWithoutConfig:
 
 class TestConnectAuthSelection:
 
-    def test_connect_with_username_password(self, store_with_secret, monkeypatch):
+    def test_connect_with_username_password(self, store_with_secret):
         """When only user/pass are set, connect() gets user+pass, token=None."""
-        import main as m
-        monkeypatch.setattr(m, "store", store_with_secret)
+        manager = SyncManager(store_with_secret)
 
         with _patch_sync_class() as MockSync:
             instance = MockSync.return_value
-            m.get_or_create_sync_instance(
+            manager.get_or_create_sync_instance(
                 nb_url="http://nb",
                 nb_token="nbt",
                 zbx_url="http://zbx",
@@ -118,14 +103,13 @@ class TestConnectAuthSelection:
                 zbx_token=None,
             )
 
-    def test_connect_with_token(self, store_with_secret, monkeypatch):
+    def test_connect_with_token(self, store_with_secret):
         """When token is set, connect() gets token only, user/pass=None."""
-        import main as m
-        monkeypatch.setattr(m, "store", store_with_secret)
+        manager = SyncManager(store_with_secret)
 
         with _patch_sync_class() as MockSync:
             instance = MockSync.return_value
-            m.get_or_create_sync_instance(
+            manager.get_or_create_sync_instance(
                 nb_url="http://nb",
                 nb_token="nbt",
                 zbx_url="http://zbx",
@@ -142,14 +126,13 @@ class TestConnectAuthSelection:
                 zbx_token="zbx_api_token_123",
             )
 
-    def test_token_preferred_over_username_password(self, store_with_secret, monkeypatch):
+    def test_token_preferred_over_username_password(self, store_with_secret):
         """When BOTH token and user/pass are set, token wins."""
-        import main as m
-        monkeypatch.setattr(m, "store", store_with_secret)
+        manager = SyncManager(store_with_secret)
 
         with _patch_sync_class() as MockSync:
             instance = MockSync.return_value
-            m.get_or_create_sync_instance(
+            manager.get_or_create_sync_instance(
                 nb_url="http://nb",
                 nb_token="nbt",
                 zbx_url="http://zbx",
@@ -171,10 +154,9 @@ class TestConnectAuthSelection:
 
 class TestSyncInstanceCaching:
 
-    def test_same_config_does_not_reconnect(self, store_with_secret, monkeypatch):
+    def test_same_config_does_not_reconnect(self, store_with_secret):
         """Calling with identical config twice should only connect() once."""
-        import main as m
-        monkeypatch.setattr(m, "store", store_with_secret)
+        manager = SyncManager(store_with_secret)
 
         kwargs = dict(
             nb_url="http://nb", nb_token="nbt", zbx_url="http://zbx",
@@ -182,36 +164,30 @@ class TestSyncInstanceCaching:
         )
         with _patch_sync_class() as MockSync:
             instance = MockSync.return_value
-            m.get_or_create_sync_instance(**kwargs)
-            m.get_or_create_sync_instance(**kwargs)
+            manager.get_or_create_sync_instance(**kwargs)
+            manager.get_or_create_sync_instance(**kwargs)
             assert instance.connect.call_count == 1
 
-    def test_changed_connection_config_triggers_reconnect(
-        self, store_with_secret, monkeypatch
-    ):
+    def test_changed_connection_config_triggers_reconnect(self, store_with_secret):
         """Changing connection parameters should re-call connect()."""
-        import main as m
-        monkeypatch.setattr(m, "store", store_with_secret)
+        manager = SyncManager(store_with_secret)
 
         with _patch_sync_class() as MockSync:
             instance = MockSync.return_value
 
-            m.get_or_create_sync_instance(
+            manager.get_or_create_sync_instance(
                 nb_url="http://nb", nb_token="nbt", zbx_url="http://zbx",
                 zbx_user="Admin", zbx_pass="pass1", zbx_token=None,
             )
-            m.get_or_create_sync_instance(
+            manager.get_or_create_sync_instance(
                 nb_url="http://nb", nb_token="nbt", zbx_url="http://zbx",
                 zbx_user="Admin", zbx_pass="pass2", zbx_token=None,
             )
             assert instance.connect.call_count == 2
 
-    def test_invalidate_connection_forces_reconnect(
-        self, store_with_secret, monkeypatch
-    ):
-        """invalidate_sync_connection() should cause the next call to reconnect."""
-        import main as m
-        monkeypatch.setattr(m, "store", store_with_secret)
+    def test_invalidate_connection_forces_reconnect(self, store_with_secret):
+        """invalidate_connection() should cause the next call to reconnect."""
+        manager = SyncManager(store_with_secret)
 
         kwargs = dict(
             nb_url="http://nb", nb_token="nbt", zbx_url="http://zbx",
@@ -219,39 +195,33 @@ class TestSyncInstanceCaching:
         )
         with _patch_sync_class() as MockSync:
             instance = MockSync.return_value
-            m.get_or_create_sync_instance(**kwargs)
+            manager.get_or_create_sync_instance(**kwargs)
             assert instance.connect.call_count == 1
 
-            m.invalidate_sync_connection()
-            m.get_or_create_sync_instance(**kwargs)
+            manager.invalidate_connection()
+            manager.get_or_create_sync_instance(**kwargs)
             assert instance.connect.call_count == 2
 
-    def test_changed_sync_config_recreates_instance(
-        self, store_with_secret, monkeypatch
-    ):
+    def test_changed_sync_config_recreates_instance(self, store_with_secret):
         """Changing sync config should create a new Sync() instance."""
-        import main as m
-        monkeypatch.setattr(m, "store", store_with_secret)
+        manager = SyncManager(store_with_secret)
 
         kwargs = dict(
             nb_url="http://nb", nb_token="nbt", zbx_url="http://zbx",
             zbx_user="Admin", zbx_pass="pass", zbx_token=None,
         )
         with _patch_sync_class() as MockSync:
-            m.get_or_create_sync_instance(**kwargs)
+            manager.get_or_create_sync_instance(**kwargs)
             assert MockSync.call_count == 1
 
             # Simulate sync config change in the DB
             store_with_secret.set_sync_config("clustering", "true")
-            m.get_or_create_sync_instance(**kwargs)
+            manager.get_or_create_sync_instance(**kwargs)
             assert MockSync.call_count == 2
 
-    def test_invalidate_instance_recreates_everything(
-        self, store_with_secret, monkeypatch
-    ):
-        """invalidate_sync_instance() should recreate Sync and re-connect."""
-        import main as m
-        monkeypatch.setattr(m, "store", store_with_secret)
+    def test_invalidate_instance_recreates_everything(self, store_with_secret):
+        """invalidate_instance() should recreate Sync and re-connect."""
+        manager = SyncManager(store_with_secret)
 
         kwargs = dict(
             nb_url="http://nb", nb_token="nbt", zbx_url="http://zbx",
@@ -259,11 +229,11 @@ class TestSyncInstanceCaching:
         )
         with _patch_sync_class() as MockSync:
             instance = MockSync.return_value
-            m.get_or_create_sync_instance(**kwargs)
+            manager.get_or_create_sync_instance(**kwargs)
             assert MockSync.call_count == 1
             assert instance.connect.call_count == 1
 
-            m.invalidate_sync_instance()
-            m.get_or_create_sync_instance(**kwargs)
+            manager.invalidate_instance()
+            manager.get_or_create_sync_instance(**kwargs)
             assert MockSync.call_count == 2
             assert instance.connect.call_count == 2

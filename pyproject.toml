@@ -1,7 +1,7 @@
 [project]
 name = "netbox-zabbix-sync-webserver"
 version = "0.1.0"
-description = "Add your description here"
+description = "FastAPI webhook server for triggering NetBox-Zabbix synchronization"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

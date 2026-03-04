@@ -116,15 +116,17 @@ class TestPostSyncConfig:
         assert resp.status_code == 200
         assert resp.json()["status"] == "info"
 
-    def test_sync_config_invalidates_instance(self, client, monkeypatch):
+    def test_sync_config_invalidates_instance(self, client, store_with_secret):
         """Updating sync config should invalidate the cached Sync instance."""
-        import main as m
-        monkeypatch.setattr(m, "_sync_instance", "fake_instance")
-        monkeypatch.setattr(m, "_sync_config_cache", {"old": "val"})
+        import routes
+        manager = routes._sync_manager
+        # Set up fake cached state
+        manager._instance = "fake_instance"
+        manager._config_cache = {"old": "val"}
 
         client.post("/sync_config", json={"config": {"new_key": "val"}})
-        assert m._sync_instance is None
-        assert m._sync_config_cache is None
+        assert manager._instance is None
+        assert manager._config_cache is None
 
 
 # ── GET /sync_config ─────────────────────────────────────────────────────────
@@ -158,14 +160,15 @@ class TestDeleteSyncConfig:
         resp = client.delete("/sync_config/nope")
         assert resp.status_code == 404
 
-    def test_delete_invalidates_instance(self, client, store_with_secret, monkeypatch):
-        import main as m
+    def test_delete_invalidates_instance(self, client, store_with_secret):
+        import routes
+        manager = routes._sync_manager
         store_with_secret.set_sync_config("k", "v")
-        monkeypatch.setattr(m, "_sync_instance", "fake")
-        monkeypatch.setattr(m, "_sync_config_cache", {"k": "v"})
+        manager._instance = "fake"
+        manager._config_cache = {"k": "v"}
 
         client.delete("/sync_config/k")
-        assert m._sync_instance is None
+        assert manager._instance is None
 
 
 # ── POST /sync ───────────────────────────────────────────────────────────────
