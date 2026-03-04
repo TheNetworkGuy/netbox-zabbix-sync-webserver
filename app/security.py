@@ -155,7 +155,7 @@ async def validate_webhook_security(request: Request, body: bytes) -> dict:
         error_msg = f"Body too large: {len(body)} > {config.MAX_BODY_SIZE}"
         logger.error("Security: %s from %s", error_msg, client_ip)
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail=error_msg if config.DEBUG_MODE else "Request body too large"
         )
     
