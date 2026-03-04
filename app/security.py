@@ -9,8 +9,8 @@ from collections import defaultdict
 from typing import Callable, Optional
 from fastapi import Request, HTTPException, status
 from functools import wraps
-import config
-from token_store import store, SecretStoreError
+from app import config
+from app.token_store import store, SecretStoreError
 
 # Configure logging
 logger = logging.getLogger(__name__)

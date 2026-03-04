@@ -1,7 +1,7 @@
 """Sync instance management with caching."""
 import logging
 from netbox_zabbix_sync import Sync
-from token_store import SecretStore
+from app.token_store import SecretStore
 
 logger = logging.getLogger(__name__)
 

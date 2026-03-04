@@ -6,9 +6,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from cli import handle_cli
-from routes import router, set_dependencies
-from sync_manager import SyncManager
-from token_store import store, SecretStoreError
+from app.routes import router, set_dependencies
+from app.sync_manager import SyncManager
+from app.token_store import store, SecretStoreError
 
 # Configure logging
 logging.basicConfig(

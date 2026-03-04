@@ -1,7 +1,7 @@
 """Dependencies for webhook security validation."""
 import logging
 from fastapi import Request, Depends, HTTPException
-from security import validate_webhook_security
+from app.security import validate_webhook_security
 
 logger = logging.getLogger(__name__)
 

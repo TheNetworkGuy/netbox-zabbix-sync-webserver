@@ -3,7 +3,7 @@ import argparse
 import logging
 import sys
 
-from token_store import SecretStore, SecretStoreError
+from app.token_store import SecretStore, SecretStoreError
 
 logger = logging.getLogger(__name__)
 

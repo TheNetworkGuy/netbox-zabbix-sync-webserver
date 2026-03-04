@@ -25,7 +25,7 @@ import time
 import json
 import uuid
 from typing import Optional
-from token_store import store, SecretStoreError
+from app.token_store import store, SecretStoreError
 
 
 def load_secret() -> str:

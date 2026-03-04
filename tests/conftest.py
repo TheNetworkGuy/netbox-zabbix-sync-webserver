@@ -12,8 +12,8 @@ import pytest
 from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 
-from token_store import SecretStore
-from sync_manager import SyncManager
+from app.token_store import SecretStore
+from app.sync_manager import SyncManager
 
 
 # ---------------------------------------------------------------------------
@@ -78,14 +78,14 @@ def client(store_with_secret, monkeypatch):
     - dependencies properly set
     """
     import main as main_mod
-    import routes
+    import app.routes as routes
 
     # Set up dependencies for routes
     manager = SyncManager(store_with_secret)
     routes.set_dependencies(store_with_secret, manager)
 
     # Bypass webhook security
-    from middleware import webhook_security_dependency
+    from app.middleware import webhook_security_dependency
     main_mod.app.dependency_overrides[webhook_security_dependency] = _make_security_override()
 
     with TestClient(main_mod.app) as tc:

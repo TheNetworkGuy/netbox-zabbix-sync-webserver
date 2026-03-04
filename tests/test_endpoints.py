@@ -118,7 +118,7 @@ class TestPostSyncConfig:
 
     def test_sync_config_invalidates_instance(self, client, store_with_secret):
         """Updating sync config should invalidate the cached Sync instance."""
-        import routes
+        import app.routes as routes
         manager = routes._sync_manager
         # Set up fake cached state
         manager._instance = "fake_instance"
@@ -161,7 +161,7 @@ class TestDeleteSyncConfig:
         assert resp.status_code == 404
 
     def test_delete_invalidates_instance(self, client, store_with_secret):
-        import routes
+        import app.routes as routes
         manager = routes._sync_manager
         store_with_secret.set_sync_config("k", "v")
         manager._instance = "fake"

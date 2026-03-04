@@ -2,16 +2,16 @@
 import logging
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, status
 
-from middleware import webhook_security_dependency
-from models import (
+from app.middleware import webhook_security_dependency
+from app.models import (
     SyncPayload,
     ConnectionConfigPayload,
     ConnectionConfigResponse,
     SyncConfigPayload,
     SyncConfigResponse,
 )
-from token_store import SecretStore, SecretStoreError
-from sync_manager import SyncManager
+from app.token_store import SecretStore, SecretStoreError
+from app.sync_manager import SyncManager
 
 logger = logging.getLogger(__name__)
 

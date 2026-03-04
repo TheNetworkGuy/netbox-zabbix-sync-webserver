@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from token_store import SecretStore, SecretStoreError
+from app.token_store import SecretStore, SecretStoreError
 
 
 # ── 1. Database creation ─────────────────────────────────────────────────────

@@ -18,7 +18,7 @@ from typing import Optional
 
 import requests
 
-from token_store import SecretStoreError, store
+from app.token_store import SecretStoreError, store
 
 
 def load_secret() -> str:

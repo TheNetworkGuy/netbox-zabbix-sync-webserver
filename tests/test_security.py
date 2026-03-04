@@ -17,7 +17,7 @@ from unittest.mock import patch
 import pytest
 from fastapi import HTTPException
 
-from security import (
+from app.security import (
     verify_hmac_signature,
     verify_timestamp_window,
     EventDeduplicator,
@@ -64,7 +64,7 @@ class TestHMACSignature:
 
     def test_no_secret_available(self):
         """With no secret at all, verification should fail."""
-        with patch("security.store") as mock_store:
+        with patch("app.security.store") as mock_store:
             mock_store.get_cached_secret.return_value = None
             assert verify_hmac_signature("123", "sig", b"body") is False
 

@@ -13,14 +13,14 @@ from unittest.mock import MagicMock, patch, call
 
 import pytest
 
-from sync_manager import SyncManager
+from app.sync_manager import SyncManager
 
 
 # ── Helper ────────────────────────────────────────────────────────────────────
 
 def _patch_sync_class():
     """Patch the Sync class used inside sync_manager so no real connections happen."""
-    return patch("sync_manager.Sync")
+    return patch("app.sync_manager.Sync")
 
 
 # ── 3. connect() not called when connection details are missing ──────────────

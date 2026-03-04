@@ -11,8 +11,8 @@ from unittest.mock import patch, MagicMock, call
 
 import pytest
 
-from sync_manager import SyncManager
-from routes import run_sync
+from app.sync_manager import SyncManager
+from app.routes import run_sync
 
 
 def _populate_connection_config(store, *, use_token=False):
@@ -34,7 +34,7 @@ class TestRunSync:
         _populate_connection_config(store_with_secret, use_token=False)
         manager = SyncManager(store_with_secret)
 
-        with patch("sync_manager.Sync") as MockSync:
+        with patch("app.sync_manager.Sync") as MockSync:
             instance = MockSync.return_value
             run_sync("evt-1", {"name": "SW01"}, None, store_with_secret, manager)
 
@@ -49,7 +49,7 @@ class TestRunSync:
         _populate_connection_config(store_with_secret, use_token=True)
         manager = SyncManager(store_with_secret)
 
-        with patch("sync_manager.Sync") as MockSync:
+        with patch("app.sync_manager.Sync") as MockSync:
             instance = MockSync.return_value
             run_sync("evt-2", None, {"name": "VM01"}, store_with_secret, manager)
 
@@ -68,7 +68,7 @@ class TestRunSync:
         store_with_secret.set_config("zabbix_token", "zbx_tok_preferred")
         manager = SyncManager(store_with_secret)
 
-        with patch("sync_manager.Sync") as MockSync:
+        with patch("app.sync_manager.Sync") as MockSync:
             instance = MockSync.return_value
             run_sync("evt-3", None, None, store_with_secret, manager)
 
@@ -85,7 +85,7 @@ class TestRunSync:
         store_with_secret.set_config("zabbix_password", "pass")
         manager = SyncManager(store_with_secret)
 
-        with patch("sync_manager.Sync") as MockSync:
+        with patch("app.sync_manager.Sync") as MockSync:
             run_sync("evt-fail-1", None, None, store_with_secret, manager)
             MockSync.return_value.start.assert_not_called()
         assert "Missing required connection" in caplog.text
@@ -98,7 +98,7 @@ class TestRunSync:
         # No zabbix_user, zabbix_password, or zabbix_token
         manager = SyncManager(store_with_secret)
 
-        with patch("sync_manager.Sync") as MockSync:
+        with patch("app.sync_manager.Sync") as MockSync:
             run_sync("evt-fail-2", None, None, store_with_secret, manager)
             MockSync.return_value.start.assert_not_called()
         assert "Missing required Zabbix authentication" in caplog.text
@@ -108,7 +108,7 @@ class TestRunSync:
         _populate_connection_config(store_with_secret, use_token=False)
         manager = SyncManager(store_with_secret)
 
-        with patch("sync_manager.Sync") as MockSync:
+        with patch("app.sync_manager.Sync") as MockSync:
             instance = MockSync.return_value
             instance.connect.side_effect = RuntimeError("connection refused")
             run_sync("evt-fail-3", None, None, store_with_secret, manager)
@@ -121,7 +121,7 @@ class TestRunSync:
         _populate_connection_config(store_with_secret, use_token=False)
         manager = SyncManager(store_with_secret)
 
-        with patch("sync_manager.Sync") as MockSync:
+        with patch("app.sync_manager.Sync") as MockSync:
             instance = MockSync.return_value
             run_sync("evt-a", {"name": "SW01"}, None, store_with_secret, manager)
             run_sync("evt-b", {"name": "SW02"}, None, store_with_secret, manager)

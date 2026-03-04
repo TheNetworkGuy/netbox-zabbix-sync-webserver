@@ -149,14 +149,19 @@ Delete a specific sync configuration key.
 
 ```
 ├── main.py              # FastAPI app entry point
-├── routes.py            # API route definitions
-├── models.py            # Pydantic request/response models
-├── sync_manager.py      # Sync instance caching and management
-├── middleware.py        # Security dependency injection
-├── security.py          # HMAC validation, rate limiting, etc.
-├── token_store.py       # SQLite storage for secrets and config
-├── config.py            # Configuration constants
 ├── cli.py               # Command-line interface
+├── app/                 # Application package
+│   ├── __init__.py      # Package exports
+│   ├── config.py        # Configuration constants
+│   ├── routes.py        # API route definitions
+│   ├── models.py        # Pydantic request/response models
+│   ├── sync_manager.py  # Sync instance caching and management
+│   ├── middleware.py    # Security dependency injection
+│   ├── security.py      # HMAC validation, rate limiting, etc.
+│   └── token_store.py   # SQLite storage for secrets and config
+├── scripts/             # Ad-hoc testing scripts
+│   ├── test_call.py     # Manual webhook testing
+│   └── test_security_break.py
 └── tests/               # Test suite
 ```
 
