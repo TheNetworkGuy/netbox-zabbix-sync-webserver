@@ -1,0 +1,5 @@
+netbox-zabbix-sync==4.0.1b1
+fastapi[standard]>=0.129.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.0.0
+cryptography>=41.0.0
