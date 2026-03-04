@@ -104,13 +104,13 @@ class TestRunSync:
         assert "Missing required Zabbix authentication" in caplog.text
 
     def test_start_not_called_on_connect_failure(self, store_with_secret, caplog):
-        """If connect() raises, start() must not be called."""
+        """If connect() returns False, start() must not be called."""
         _populate_connection_config(store_with_secret, use_token=False)
         manager = SyncManager(store_with_secret)
 
         with patch("app.sync_manager.Sync") as MockSync:
             instance = MockSync.return_value
-            instance.connect.side_effect = RuntimeError("connection refused")
+            instance.connect.return_value = False
             run_sync("evt-fail-3", None, None, store_with_secret, manager)
 
             instance.start.assert_not_called()

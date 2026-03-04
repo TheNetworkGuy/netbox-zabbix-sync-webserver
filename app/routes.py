@@ -391,8 +391,8 @@ async def delete_sync_config_key(
 
 @router.post("/sync")
 async def sync_webhook(
-    payload: SyncPayload,
     background_tasks: BackgroundTasks,
+    payload: SyncPayload | None = None,
     security_info: dict = Depends(webhook_security_dependency),
     store: SecretStore = Depends(get_store),
     sync_manager: SyncManager = Depends(get_sync_manager),
@@ -403,6 +403,8 @@ async def sync_webhook(
     Security validation is performed by the webhook_security_dependency
     before this endpoint logic runs. The sync operation runs in the background
     after the response is sent.
+
+    The payload is optional - if omitted, sync runs without filters.
     """
     logger.info(
         "Webhook received for event %s from %s",
@@ -410,12 +412,15 @@ async def sync_webhook(
         security_info["client_ip"],
     )
 
+    device_filter = payload.device_filter if payload else None
+    vm_filter = payload.vm_filter if payload else None
+
     # Schedule the sync to run in the background
     background_tasks.add_task(
         run_sync,
         security_info["event_id"],
-        payload.device_filter,
-        payload.vm_filter,
+        device_filter,
+        vm_filter,
         store,
         sync_manager,
     )
@@ -424,6 +429,6 @@ async def sync_webhook(
         "status": "accepted",
         "message": "Sync request accepted and will be processed in the background",
         "event_id": security_info["event_id"],
-        "device_filter": payload.device_filter,
-        "vm_filter": payload.vm_filter,
+        "device_filter": device_filter,
+        "vm_filter": vm_filter,
     }

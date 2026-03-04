@@ -86,7 +86,7 @@ class SyncManager:
                 "token" if use_token_auth else "username/password",
             )
 
-            self._instance.connect(
+            connected = self._instance.connect(
                 nb_url,
                 nb_token,
                 zbx_url,
@@ -94,6 +94,12 @@ class SyncManager:
                 zbx_pass=zbx_auth_pass,
                 zbx_token=zbx_auth_token,
             )
+
+            if not connected:
+                raise RuntimeError(
+                    "Connection to NetBox/Zabbix failed - check credentials and server availability"
+                )
+
             self._connection_cache = connection_config.copy()
 
         return self._instance
