@@ -12,7 +12,6 @@ Covers:
 
 from unittest.mock import patch
 
-
 from app.sync_manager import SyncManager
 
 # ── Helper ────────────────────────────────────────────────────────────────────
