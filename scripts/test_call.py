@@ -2,11 +2,15 @@
 Standalone webserver test script to send properly signed webhook requests.
 
 Usage:
-	python test_webserver.py
+	python test_call.py --sync
+	python test_call.py --sync-with-filter
+	python test_call.py --set-connect-data
+	python test_call.py --set-config-data
 
 Make sure the server is running:
 	uvicorn main:app --reload --port 8001
 """
+import argparse
 import hashlib
 import hmac
 import json
@@ -152,35 +156,62 @@ def send_sync_config_update(
 
 
 if __name__ == "__main__":
-
-
-
-	# print("Test: Webhook with device filter only")
-	# send_webhook(data={"device_filter": {"name": "SW01N0"}})
-
-	print("Test: Webhook without filters")
-	send_webhook()
-
-	# print("\nTest: Update connect config (netbox_url)")
-	# send_connect_config_update(data={"netbox_url": "http://127.0.0.1:8000"})
-
-	# print("\nTest: Update connect config (multiple values)")
-	# send_connect_config_update(
-	#     data={
-	#         "netbox_url": "http://127.0.0.1:8000",
-	#         "netbox_token": "nbt_geXovN0NThHK.d8pHXcENlq7PQL3Vo6br8Pw0UdqZ038Y0NVrzTy0",
-	#         "zabbix_url": "http://127.0.0.1",
-	#         "zabbix_user": "Admin",
-	#         "zabbix_password": "zabbix",
-	#     }
-	# )
-
-	# print("\nTest: Update sync config (clustering and template_cf)")
-	# send_sync_config_update(
-	#     data={
-	#         "config": {
-	#             "clustering": "true",
-	#             # "template_cf": "zabbix_template",
-	#         }
-	#     }
-	# )
+	parser = argparse.ArgumentParser(
+		description="Send signed webhook requests to the netbox-zabbix-sync webserver"
+	)
+	
+	# Add mutually exclusive group for the main actions
+	group = parser.add_mutually_exclusive_group(required=True)
+	group.add_argument(
+		"--sync",
+		action="store_true",
+		help="Send webhook without filters"
+	)
+	group.add_argument(
+		"--sync-with-filter",
+		action="store_true",
+		help="Send webhook with device filter (name: SW01N0)"
+	)
+	group.add_argument(
+		"--set-connect-data",
+		action="store_true",
+		help="Update connection config (netbox_url, netbox_token, zabbix_url, etc.)"
+	)
+	group.add_argument(
+		"--set-config-data",
+		action="store_true",
+		help="Update sync configuration (clustering, template_cf, etc.)"
+	)
+	
+	args = parser.parse_args()
+	
+	if args.sync:
+		print("Test: Webhook without filters")
+		send_webhook()
+	
+	elif args.sync_with_filter:
+		print("Test: Webhook with device filter")
+		send_webhook(data={"device_filter": {"name": "SW01N0"}})
+	
+	elif args.set_connect_data:
+		print("Test: Update connect config (multiple values)")
+		send_connect_config_update(
+			data={
+				"netbox_url": "http://127.0.0.1:8000",
+				"netbox_token": "nbt_geXovN0NThHK.d8pHXcENlq7PQL3Vo6br8Pw0UdqZ038Y0NVrzTy0",
+				"zabbix_url": "http://127.0.0.1",
+				"zabbix_user": "Admin",
+				"zabbix_password": "zabbix",
+			}
+		)
+	
+	elif args.set_config_data:
+		print("Test: Update sync config (clustering and template_cf)")
+		send_sync_config_update(
+			data={
+				"config": {
+					"clustering": "true",
+					"template_cf": "zabbix_template",
+				}
+			}
+		)
