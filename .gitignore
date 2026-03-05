@@ -8,3 +8,11 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Database files with sensitive data
+app_data.db
+app_data.db.key
+
+# Other files
+.coverage
+.DS_Store
