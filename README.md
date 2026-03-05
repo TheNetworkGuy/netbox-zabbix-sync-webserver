@@ -26,20 +26,15 @@ A FastAPI-based webhook server that receives events and triggers synchronization
    cd netbox-zabbix-sync-webserver
    ```
 
-2. Create and activate a virtual environment:
+2. Install dependencies with uv:
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install uv
+   uv sync --dev
    ```
 
-3. Install dependencies:
+3. Generate a webhook secret:
    ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Generate a webhook secret:
-   ```bash
-   python main.py --generate-secret
+   uv run python main.py --generate-secret
    ```
    Save the output secret - you'll need it to sign webhook requests.
 
@@ -48,12 +43,12 @@ A FastAPI-based webhook server that receives events and triggers synchronization
 Start the server with uvicorn:
 
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8000
+uv run uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
 For development with auto-reload:
 ```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ## Configuration
@@ -159,9 +154,6 @@ Delete a specific sync configuration key.
 │   ├── middleware.py    # Security dependency injection
 │   ├── security.py      # HMAC validation, rate limiting, etc.
 │   └── token_store.py   # SQLite storage for secrets and config
-├── scripts/             # Ad-hoc testing scripts
-│   ├── test_call.py     # Manual webhook testing
-│   └── test_security_break.py
 └── tests/               # Test suite
 ```
 
@@ -170,12 +162,19 @@ Delete a specific sync configuration key.
 Run the test suite:
 
 ```bash
-pytest
+uv run pytest
 ```
 
 With coverage:
 ```bash
-pytest --cov=. --cov-report=term-missing
+uv run pytest --cov=. --cov-report=term-missing --cov-fail-under=70
+```
+
+Run linting and formatting checks:
+```bash
+uv run ruff check .
+uv run ruff format . --check
+uv run ty check
 ```
 
 ## Security
