@@ -62,7 +62,7 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `WEBHOOK_DB_PATH` | Path to SQLite database | `webhook_secrets.db` |
+| `WEBHOOK_DB_PATH` | Path to SQLite database | `app_data.db` |
 | `CONNECT_CONFIG_ENCRYPTION_KEY` | Fernet key for encrypting credentials | Auto-generated |
 | `IP_WHITELIST` | Comma-separated CIDR ranges | `0.0.0.0/0` (allow all) |
 | `DEBUG_MODE` | Enable detailed error messages | `true` |

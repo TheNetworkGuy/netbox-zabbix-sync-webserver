@@ -3,7 +3,7 @@ import os
 from ipaddress import IPv4Network
 
 # Security Settings
-WEBHOOK_DB_PATH = os.getenv("WEBHOOK_DB_PATH", "webhook_secrets.db")
+WEBHOOK_DB_PATH = os.getenv("WEBHOOK_DB_PATH", "app_data.db")
 WEBHOOK_SECRET_DEBUG = os.getenv("WEBHOOK_SECRET_DEBUG", "true").lower() == "true"
 
 # Timestamp window for replay protection (seconds)

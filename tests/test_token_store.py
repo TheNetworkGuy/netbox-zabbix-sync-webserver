@@ -36,7 +36,7 @@ class TestDatabaseCreation:
             ).fetchall()
         }
         conn.close()
-        assert "webhook_secrets" in tables
+        assert "auth_secrets" in tables
         assert "connection_config" in tables
         assert "sync_config" in tables
 
@@ -83,7 +83,7 @@ class TestWebhookSecret:
         from datetime import datetime, timezone
         conn = sqlite3.connect(store.db_path)
         conn.execute(
-            "INSERT INTO webhook_secrets (secret, created_at) VALUES (?, ?)",
+            "INSERT INTO auth_secrets (secret, created_at) VALUES (?, ?)",
             ("manual_secret", datetime.now(timezone.utc).isoformat()),
         )
         conn.commit()

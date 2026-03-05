@@ -10,7 +10,7 @@ from cryptography.fernet import Fernet, InvalidToken
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DB_PATH = "webhook_secrets.db"
+DEFAULT_DB_PATH = "app_data.db"
 
 
 class SecretStoreError(RuntimeError):
@@ -73,7 +73,7 @@ class SecretStore:
             with self._connect() as conn:
                 conn.execute(
                     """
-                    CREATE TABLE IF NOT EXISTS webhook_secrets (
+                    CREATE TABLE IF NOT EXISTS auth_secrets (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         secret TEXT NOT NULL,
                         created_at TEXT NOT NULL
@@ -114,7 +114,7 @@ class SecretStore:
         try:
             with self._connect() as conn:
                 row = conn.execute(
-                    "SELECT secret FROM webhook_secrets ORDER BY id DESC LIMIT 1"
+                    "SELECT secret FROM auth_secrets ORDER BY id DESC LIMIT 1"
                 ).fetchone()
                 if row:
                     return row[0]
@@ -127,7 +127,7 @@ class SecretStore:
         try:
             with self._connect() as conn:
                 conn.execute(
-                    "INSERT INTO webhook_secrets (secret, created_at) VALUES (?, ?)",
+                    "INSERT INTO auth_secrets (secret, created_at) VALUES (?, ?)",
                     (secret, datetime.now(timezone.utc).isoformat()),
                 )
                 conn.commit()
