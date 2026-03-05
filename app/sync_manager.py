@@ -81,9 +81,10 @@ class SyncManager:
             zbx_auth_pass = None if use_token_auth else zbx_pass
             zbx_auth_token = zbx_token if use_token_auth else None
 
+            logger.debug("Using auth type %s for Zabbix connection", "token" if use_token_auth else "user/pass")
+
             logger.info(
-                "(Re)connecting Sync instance to NetBox/Zabbix using %s auth",
-                "token" if use_token_auth else "username/password",
+                "(Re)connecting Sync instance to Netbox/Zabbix",
             )
 
             connected = self._instance.connect(
