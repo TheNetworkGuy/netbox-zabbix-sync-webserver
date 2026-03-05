@@ -126,7 +126,7 @@ def send_connect_config_update(
 ) -> requests.Response:
 	"""Send a signed request to update connection config."""
 	if data is None:
-		data = {"netbox_url": "http://127.0.0.1:8000"}
+		data = {"netbox_url": "http://host.docker.internal:8000"}
 
 	if secret is None:
 		secret = load_secret()
@@ -197,9 +197,9 @@ if __name__ == "__main__":
 		print("Test: Update connect config (multiple values)")
 		send_connect_config_update(
 			data={
-				"netbox_url": "http://127.0.0.1:8000",
+				"netbox_url": "http://host.docker.internal:8000",
 				"netbox_token": "nbt_geXovN0NThHK.d8pHXcENlq7PQL3Vo6br8Pw0UdqZ038Y0NVrzTy0",
-				"zabbix_url": "http://127.0.0.1",
+				"zabbix_url": "http://host.docker.internal",
 				"zabbix_user": "Admin",
 				"zabbix_password": "zabbix",
 			}
