@@ -16,3 +16,6 @@ app_data.db.key
 # Other files
 .coverage
 .DS_Store
+
+# Ignore script related files for local testing
+scripts/*
