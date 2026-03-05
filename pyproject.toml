@@ -24,6 +24,9 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+filterwarnings = [
+    "ignore::ResourceWarning",
+]
 
 [tool.ruff]
 line-length = 100
