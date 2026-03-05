@@ -10,9 +10,8 @@ Covers:
 - connect() NOT re-called on duplicate /sync with same config
 """
 
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import patch
 
-import pytest
 
 from app.sync_manager import SyncManager
 
@@ -300,7 +299,7 @@ class TestCleanup:
             zbx_pass="pass",
             zbx_token=None,
         )
-        with _patch_sync_class() as MockSync:
+        with _patch_sync_class():
             manager.get_or_create_sync_instance(**kwargs)
 
             # Verify caches are populated

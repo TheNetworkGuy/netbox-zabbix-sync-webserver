@@ -1,4 +1,5 @@
 """FastAPI route definitions."""
+
 import logging
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, status
 
@@ -160,9 +161,7 @@ async def update_connection_config(
         logger.info("Successfully updated configuration keys: %s", updated_keys)
 
         sync_manager.invalidate_connection()
-        logger.info(
-            "Connection config changed in DB; Sync will reconnect on next /sync"
-        )
+        logger.info("Connection config changed in DB; Sync will reconnect on next /sync")
 
         return ConnectionConfigResponse(
             status="success",

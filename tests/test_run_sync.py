@@ -7,9 +7,9 @@ Covers:
 - Token auth preferred over user/pass in run_sync flow
 - start() called with correct filters
 """
-from unittest.mock import patch, MagicMock, call
 
-import pytest
+from unittest.mock import patch
+
 
 from app.sync_manager import SyncManager
 from app.routes import run_sync
@@ -28,7 +28,6 @@ def _populate_connection_config(store, *, use_token=False):
 
 
 class TestRunSync:
-
     def test_successful_sync_with_user_pass(self, store_with_secret):
         """Full sync with user/pass should call connect + start."""
         _populate_connection_config(store_with_secret, use_token=False)

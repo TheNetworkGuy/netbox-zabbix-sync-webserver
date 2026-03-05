@@ -1,4 +1,5 @@
 """Pydantic models for API request/response schemas."""
+
 from pydantic import BaseModel, Field
 
 
@@ -18,9 +19,7 @@ class ConnectionConfigPayload(BaseModel):
     zabbix_url: str | None = Field(None, description="Zabbix API URL")
     zabbix_user: str | None = Field(None, description="Zabbix username")
     zabbix_password: str | None = Field(None, description="Zabbix password")
-    zabbix_token: str | None = Field(
-        None, description="Zabbix API token (alternative to password)"
-    )
+    zabbix_token: str | None = Field(None, description="Zabbix API token (alternative to password)")
 
 
 class ConnectionConfigResponse(BaseModel):
@@ -34,9 +33,7 @@ class ConnectionConfigResponse(BaseModel):
 class SyncConfigPayload(BaseModel):
     """Schema for sync configuration updates."""
 
-    config: dict[str, str] = Field(
-        ..., description="Sync configuration key-value pairs"
-    )
+    config: dict[str, str] = Field(..., description="Sync configuration key-value pairs")
 
 
 class SyncConfigResponse(BaseModel):

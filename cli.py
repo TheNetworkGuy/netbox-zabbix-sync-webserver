@@ -1,4 +1,5 @@
 """Command-line interface for the webserver."""
+
 import argparse
 import logging
 import sys

@@ -12,6 +12,7 @@ Tests all security controls through actual HTTP requests:
 These tests use the actual security middleware, unlike test_endpoints.py
 which bypasses security for easier functional testing.
 """
+
 import hashlib
 import hmac
 import json
@@ -31,6 +32,7 @@ import main as main_mod
 # ---------------------------------------------------------------------------
 # Fixtures for security testing (no security bypass)
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def secure_client(store_with_secret):
@@ -85,6 +87,7 @@ def _sign_request(
 # Valid Request Tests
 # ---------------------------------------------------------------------------
 
+
 class TestValidRequest:
     """Tests that properly signed requests are accepted."""
 
@@ -113,6 +116,7 @@ class TestValidRequest:
 # ---------------------------------------------------------------------------
 # Signature Verification Tests
 # ---------------------------------------------------------------------------
+
 
 class TestSignatureVerification:
     """Tests for HMAC-SHA256 signature validation."""
@@ -161,6 +165,7 @@ class TestSignatureVerification:
 # ---------------------------------------------------------------------------
 # Missing Header Tests
 # ---------------------------------------------------------------------------
+
 
 class TestMissingHeaders:
     """Tests for missing required security headers."""
@@ -213,6 +218,7 @@ class TestMissingHeaders:
 # Timestamp Validation Tests
 # ---------------------------------------------------------------------------
 
+
 class TestTimestampValidation:
     """Tests for timestamp window validation."""
 
@@ -258,6 +264,7 @@ class TestTimestampValidation:
 # Replay Attack (Event Deduplication) Tests
 # ---------------------------------------------------------------------------
 
+
 class TestReplayAttackPrevention:
     """Tests for event ID deduplication to prevent replay attacks."""
 
@@ -292,6 +299,7 @@ class TestReplayAttackPrevention:
 # Rate Limiting Tests
 # ---------------------------------------------------------------------------
 
+
 class TestRateLimiting:
     """Tests for rate limiting protection."""
 
@@ -302,6 +310,7 @@ class TestRateLimiting:
         # Send requests until rate limited (default is 50/min)
         # We'll patch the rate limiter to use a smaller limit for testing
         from app import security
+
         original_limiter = security.rate_limiter
 
         try:
@@ -312,7 +321,7 @@ class TestRateLimiting:
             for i in range(3):
                 headers, body = _sign_request({}, secret)
                 resp = secure_client.post("/sync", headers=headers, content=body)
-                assert resp.status_code == 200, f"Request {i+1} should pass"
+                assert resp.status_code == 200, f"Request {i + 1} should pass"
 
             # 4th request should be rate limited
             headers, body = _sign_request({}, secret)
@@ -327,6 +336,7 @@ class TestRateLimiting:
 # ---------------------------------------------------------------------------
 # Body Size Limit Tests
 # ---------------------------------------------------------------------------
+
 
 class TestBodySizeLimit:
     """Tests for request body size limits."""
@@ -350,6 +360,7 @@ class TestBodySizeLimit:
 # ---------------------------------------------------------------------------
 # IP Whitelist Tests
 # ---------------------------------------------------------------------------
+
 
 class TestIPWhitelist:
     """Tests for IP whitelist functionality."""
@@ -424,6 +435,7 @@ class TestIPWhitelist:
 # ---------------------------------------------------------------------------
 # Multiple Endpoints Security Tests
 # ---------------------------------------------------------------------------
+
 
 class TestSecurityOnAllEndpoints:
     """Verify security is enforced on all protected endpoints."""

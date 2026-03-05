@@ -71,7 +71,7 @@ def send_raw_request(
     headers: Optional[dict] = None,
     body: bytes = b"",
     verbose: bool = False
-) -> requests.Response:
+) -> requests.Response | None:
     """Send a raw request with custom headers and body."""
     if headers is None:
         headers = {}
@@ -83,7 +83,7 @@ def send_raw_request(
             try:
                 detail = response.json().get('detail', response.text)
                 print(f"   Response: {detail}")
-            except:
+            except Exception:
                 print(f"   Response: {response.text[:100]}")
         
         return response
@@ -157,12 +157,12 @@ def test_oversized_body(url: str = "http://localhost:8001/sync"):
         "X-Event-ID": str(uuid.uuid4())
     }
     
-    print(f"Sending 2 MB payload...")
+    print("Sending 2 MB payload...")
     response = send_raw_request(url, headers, body, verbose=True)
     
     if response:
         if response.status_code == 413:
-            print(f"   ✓ Request rejected (413)")
+            print("   ✓ Request rejected (413)")
         else:
             print(f"   ❌ Request not rejected! Status: {response.status_code}")
 
@@ -187,12 +187,12 @@ def test_expired_timestamp(url: str = "http://localhost:8001/sync"):
         "X-Event-ID": str(uuid.uuid4())
     }
     
-    print(f"Sending request with timestamp from 15 minutes ago...")
+    print("Sending request with timestamp from 15 minutes ago...")
     response = send_raw_request(url, headers, body, verbose=True)
     
     if response:
         if response.status_code == 401:
-            print(f"   ✓ Request rejected (401)")
+            print("   ✓ Request rejected (401)")
         else:
             print(f"   ❌ Request not rejected! Status: {response.status_code}")
 
@@ -217,7 +217,7 @@ def test_future_timestamp(url: str = "http://localhost:8001/sync"):
         "X-Event-ID": str(uuid.uuid4())
     }
     
-    print(f"Sending request with timestamp 15 minutes in the future...")
+    print("Sending request with timestamp 15 minutes in the future...")
     response = send_raw_request(url, headers, body)
     
     if response:
@@ -247,12 +247,12 @@ def test_invalid_signature(url: str = "http://localhost:8001/sync"):
         "X-Event-ID": str(uuid.uuid4())
     }
     
-    print(f"Sending request with signature from wrong secret...")
+    print("Sending request with signature from wrong secret...")
     response = send_raw_request(url, headers, body, verbose=True)
     
     if response:
         if response.status_code == 401:
-            print(f"   ✓ Request rejected (401)")
+            print("   ✓ Request rejected (401)")
         else:
             print(f"   ❌ Request not rejected! Status: {response.status_code}")
 
@@ -274,12 +274,12 @@ def test_missing_signature_header(url: str = "http://localhost:8001/sync"):
         "X-Event-ID": str(uuid.uuid4())
     }
     
-    print(f"Sending request without X-Signature header...")
+    print("Sending request without X-Signature header...")
     response = send_raw_request(url, headers, body, verbose=True)
     
     if response:
         if response.status_code == 400:
-            print(f"   ✓ Request rejected (400)")
+            print("   ✓ Request rejected (400)")
         else:
             print(f"   ❌ Request not rejected! Status: {response.status_code}")
 
@@ -303,7 +303,7 @@ def test_missing_timestamp_header(url: str = "http://localhost:8001/sync"):
         "X-Event-ID": str(uuid.uuid4())
     }
     
-    print(f"Sending request without X-Timestamp header...")
+    print("Sending request without X-Timestamp header...")
     response = send_raw_request(url, headers, body)
     
     if response:
@@ -332,7 +332,7 @@ def test_missing_event_id_header(url: str = "http://localhost:8001/sync"):
         # Missing X-Event-ID
     }
     
-    print(f"Sending request without X-Event-ID header...")
+    print("Sending request without X-Event-ID header...")
     response = send_raw_request(url, headers, body)
     
     if response:
@@ -367,17 +367,17 @@ def test_replay_attack(url: str = "http://localhost:8001/sync"):
     
     if response1:
         if response1.status_code == 200:
-            print(f"   ✓ First request accepted (200)")
+            print("   ✓ First request accepted (200)")
         else:
             print(f"   ❌ First request failed ({response1.status_code})")
     
     # Send exact same request again (replay attack)
-    print(f"\nSending duplicate request with same event ID (replay attack)...")
+    print("\nSending duplicate request with same event ID (replay attack)...")
     response2 = send_raw_request(url, headers, body, verbose=True)
     
     if response2:
         if response2.status_code == 409:
-            print(f"   ✓ Replay attack blocked (409)")
+            print("   ✓ Replay attack blocked (409)")
         else:
             print(f"   ❌ Replay attack not blocked! Status: {response2.status_code}")
 
@@ -437,7 +437,7 @@ def test_invalid_timestamp_format(url: str = "http://localhost:8001/sync"):
         "X-Event-ID": str(uuid.uuid4())
     }
     
-    print(f"Sending request with invalid timestamp format...")
+    print("Sending request with invalid timestamp format...")
     response = send_raw_request(url, headers, body)
     
     if response:

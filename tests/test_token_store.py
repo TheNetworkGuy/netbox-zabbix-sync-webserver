@@ -6,7 +6,7 @@ Covers:
 - Encrypted connection config CRUD
 - Plain-text sync config CRUD
 """
-import os
+
 from pathlib import Path
 
 import pytest
@@ -16,8 +16,8 @@ from app.token_store import SecretStore, SecretStoreError
 
 # ── 1. Database creation ─────────────────────────────────────────────────────
 
-class TestDatabaseCreation:
 
+class TestDatabaseCreation:
     def test_initialize_creates_db_file(self, tmp_path):
         """Running initialize() on a fresh path must create the DB file."""
         db_path = str(tmp_path / "subdir" / "new.db")
@@ -28,12 +28,11 @@ class TestDatabaseCreation:
     def test_initialize_creates_tables(self, store):
         """All expected tables should be present after initialize()."""
         import sqlite3
+
         conn = sqlite3.connect(store.db_path)
         tables = {
             row[0]
-            for row in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            ).fetchall()
+            for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
         }
         conn.close()
         assert "auth_secrets" in tables
@@ -47,8 +46,8 @@ class TestDatabaseCreation:
 
 # ── 2. Webhook secret lifecycle ──────────────────────────────────────────────
 
-class TestWebhookSecret:
 
+class TestWebhookSecret:
     def test_no_secret_initially(self, store):
         """A freshly initialized store has no secret."""
         assert store.get_latest_secret() is None
@@ -81,6 +80,7 @@ class TestWebhookSecret:
         # generate_and_store_secret (which updates the cache itself).
         import sqlite3
         from datetime import datetime, timezone
+
         conn = sqlite3.connect(store.db_path)
         conn.execute(
             "INSERT INTO auth_secrets (secret, created_at) VALUES (?, ?)",
@@ -103,8 +103,8 @@ class TestWebhookSecret:
 
 # ── 3. Connection config (encrypted) ────────────────────────────────────────
 
-class TestConnectionConfig:
 
+class TestConnectionConfig:
     def test_get_nonexistent_key_returns_none(self, store):
         assert store.get_config("does_not_exist") is None
 
@@ -142,6 +142,7 @@ class TestConnectionConfig:
     def test_values_are_encrypted_at_rest(self, store):
         """Raw column value in DB should not match the plaintext."""
         import sqlite3
+
         store.set_config("secret_key", "super_secret_value")
         conn = sqlite3.connect(store.db_path)
         row = conn.execute(
@@ -155,8 +156,8 @@ class TestConnectionConfig:
 
 # ── 4. Sync config (plain text) ─────────────────────────────────────────────
 
-class TestSyncConfig:
 
+class TestSyncConfig:
     def test_get_nonexistent_sync_key_returns_none(self, store):
         assert store.get_sync_config("missing") is None
 

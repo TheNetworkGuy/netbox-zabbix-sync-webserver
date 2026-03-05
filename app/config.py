@@ -1,4 +1,5 @@
 """Configuration settings for the webhook server."""
+
 import os
 from ipaddress import IPv4Network
 

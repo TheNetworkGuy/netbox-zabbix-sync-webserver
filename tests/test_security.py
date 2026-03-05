@@ -8,14 +8,12 @@ Covers:
 - Duplicate event ID rejected
 - HMAC signature generation correctness
 """
+
 import hashlib
 import hmac
 import time
-import uuid
 from unittest.mock import patch
 
-import pytest
-from fastapi import HTTPException
 
 from app.security import (
     verify_hmac_signature,
@@ -26,7 +24,6 @@ from app.security import (
 
 
 class TestHMACSignature:
-
     def test_valid_signature(self):
         secret = "test_secret_123"
         timestamp = str(int(time.time()))
@@ -70,7 +67,6 @@ class TestHMACSignature:
 
 
 class TestTimestampWindow:
-
     def test_current_timestamp_passes(self):
         ts = str(int(time.time()))
         assert verify_timestamp_window(ts) is True
@@ -92,7 +88,6 @@ class TestTimestampWindow:
 
 
 class TestEventDeduplicator:
-
     def test_first_event_not_duplicate(self):
         dedup = EventDeduplicator(ttl_seconds=60)
         assert dedup.is_duplicate("evt-1") is False
@@ -112,12 +107,12 @@ class TestEventDeduplicator:
         dedup.is_duplicate("evt-1")
         # After TTL=0, the event should be cleaned on next check
         import time
+
         time.sleep(0.01)
         assert dedup.is_duplicate("evt-1") is False
 
 
 class TestRateLimiter:
-
     def test_under_limit_passes(self):
         rl = RateLimiter(requests=5, window_seconds=60)
         for _ in range(5):

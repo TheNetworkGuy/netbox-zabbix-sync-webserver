@@ -1,4 +1,5 @@
 """SQLite-backed storage for webhook secrets and connection configuration."""
+
 import base64
 import logging
 import os
@@ -175,11 +176,11 @@ class SecretStore:
         """Store or update an encrypted configuration value."""
         if not key or not value:
             raise SecretStoreError("Config key and value cannot be empty")
-        
+
         try:
             encrypted_value = self._encrypt(value)
             now_iso = datetime.now(timezone.utc).isoformat()
-            
+
             with self._connect() as conn:
                 # Try to update first
                 cursor = conn.execute(
@@ -188,9 +189,9 @@ class SecretStore:
                     SET config_value = ?, updated_at = ?
                     WHERE config_key = ?
                     """,
-                    (encrypted_value, now_iso, key)
+                    (encrypted_value, now_iso, key),
                 )
-                
+
                 # If no rows were updated, insert a new one
                 if cursor.rowcount == 0:
                     conn.execute(
@@ -199,10 +200,10 @@ class SecretStore:
                         (config_key, config_value, created_at, updated_at)
                         VALUES (?, ?, ?, ?)
                         """,
-                        (key, encrypted_value, now_iso, now_iso)
+                        (key, encrypted_value, now_iso, now_iso),
                     )
                 conn.commit()
-            
+
             # Invalidate cache
             self._config_cache = None
         except sqlite3.IntegrityError as exc:
@@ -215,10 +216,9 @@ class SecretStore:
         try:
             with self._connect() as conn:
                 row = conn.execute(
-                    "SELECT config_value FROM connection_config WHERE config_key = ?",
-                    (key,)
+                    "SELECT config_value FROM connection_config WHERE config_key = ?", (key,)
                 ).fetchone()
-                
+
                 if row:
                     encrypted_value = row[0]
                     return self._decrypt(encrypted_value)
@@ -233,7 +233,7 @@ class SecretStore:
                 rows = conn.execute(
                     "SELECT config_key, config_value FROM connection_config"
                 ).fetchall()
-                
+
                 result = {}
                 for key, encrypted_value in rows:
                     decrypted = self._decrypt(encrypted_value)
@@ -247,13 +247,10 @@ class SecretStore:
         """Delete a configuration value. Returns True if deleted, False if not found."""
         try:
             with self._connect() as conn:
-                cursor = conn.execute(
-                    "DELETE FROM connection_config WHERE config_key = ?",
-                    (key,)
-                )
+                cursor = conn.execute("DELETE FROM connection_config WHERE config_key = ?", (key,))
                 conn.commit()
                 deleted = cursor.rowcount > 0
-            
+
             if deleted:
                 self._config_cache = None
             return deleted
@@ -264,10 +261,10 @@ class SecretStore:
         """Store or update a plain-text sync configuration value."""
         if not key or value is None:
             raise SecretStoreError("Sync config key and value cannot be empty")
-        
+
         try:
             now_iso = datetime.now(timezone.utc).isoformat()
-            
+
             with self._connect() as conn:
                 # Try to update first
                 cursor = conn.execute(
@@ -276,9 +273,9 @@ class SecretStore:
                     SET config_value = ?, updated_at = ?
                     WHERE config_key = ?
                     """,
-                    (value, now_iso, key)
+                    (value, now_iso, key),
                 )
-                
+
                 # If no rows were updated, insert a new one
                 if cursor.rowcount == 0:
                     conn.execute(
@@ -287,7 +284,7 @@ class SecretStore:
                         (config_key, config_value, created_at, updated_at)
                         VALUES (?, ?, ?, ?)
                         """,
-                        (key, value, now_iso, now_iso)
+                        (key, value, now_iso, now_iso),
                     )
                 conn.commit()
         except sqlite3.IntegrityError as exc:
@@ -300,10 +297,9 @@ class SecretStore:
         try:
             with self._connect() as conn:
                 row = conn.execute(
-                    "SELECT config_value FROM sync_config WHERE config_key = ?",
-                    (key,)
+                    "SELECT config_value FROM sync_config WHERE config_key = ?", (key,)
                 ).fetchone()
-                
+
                 if row:
                     return row[0]
                 return None
@@ -314,10 +310,8 @@ class SecretStore:
         """Retrieve all sync configuration values as a dictionary."""
         try:
             with self._connect() as conn:
-                rows = conn.execute(
-                    "SELECT config_key, config_value FROM sync_config"
-                ).fetchall()
-                
+                rows = conn.execute("SELECT config_key, config_value FROM sync_config").fetchall()
+
                 return {key: value for key, value in rows}
         except sqlite3.Error as exc:
             raise SecretStoreError(f"Failed to read all sync config from DB: {exc}") from exc
@@ -326,10 +320,7 @@ class SecretStore:
         """Delete a sync configuration value. Returns True if deleted, False if not found."""
         try:
             with self._connect() as conn:
-                cursor = conn.execute(
-                    "DELETE FROM sync_config WHERE config_key = ?",
-                    (key,)
-                )
+                cursor = conn.execute("DELETE FROM sync_config WHERE config_key = ?", (key,))
                 conn.commit()
                 return cursor.rowcount > 0
         except sqlite3.Error as exc:
@@ -337,4 +328,3 @@ class SecretStore:
 
 
 store = SecretStore()
-

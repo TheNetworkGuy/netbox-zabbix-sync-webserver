@@ -1,12 +1,11 @@
 """Shared fixtures for the test suite."""
+
 import hashlib
 import hmac
 import json
 import os
 import time
 import uuid
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from cryptography.fernet import Fernet
@@ -19,6 +18,7 @@ from app.sync_manager import SyncManager
 # ---------------------------------------------------------------------------
 # Isolation: every test gets its own temporary DB + encryption key
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(autouse=True)
 def _isolate_env(tmp_path, monkeypatch):
@@ -57,8 +57,10 @@ def sync_manager(store_with_secret):
 # FastAPI TestClient with security dependency overridden
 # ---------------------------------------------------------------------------
 
+
 def _make_security_override():
     """Return a dependency that always passes security checks."""
+
     async def _override():
         return {
             "client_ip": "127.0.0.1",
@@ -66,6 +68,7 @@ def _make_security_override():
             "timestamp": str(int(time.time())),
             "valid": True,
         }
+
     return _override
 
 
@@ -86,6 +89,7 @@ def client(store_with_secret, monkeypatch):
 
     # Bypass webhook security
     from app.middleware import webhook_security_dependency
+
     main_mod.app.dependency_overrides[webhook_security_dependency] = _make_security_override()
 
     with TestClient(main_mod.app) as tc:
@@ -99,6 +103,7 @@ def client(store_with_secret, monkeypatch):
 # ---------------------------------------------------------------------------
 # Helpers for signed requests (used by integration / security tests)
 # ---------------------------------------------------------------------------
+
 
 def sign_request(payload: dict, secret: str, event_id: str | None = None):
     """Build headers + body for a properly signed webhook request."""

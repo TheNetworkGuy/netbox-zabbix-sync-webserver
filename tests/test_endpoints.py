@@ -9,16 +9,12 @@ Covers:
 - DELETE /sync_config/{key}
 - POST /sync            (accepted, background task scheduled)
 """
-import uuid
-from unittest.mock import patch, MagicMock
-
-import pytest
 
 
 # ── Root ──────────────────────────────────────────────────────────────────────
 
-class TestRoot:
 
+class TestRoot:
     def test_root_returns_greeting(self, client):
         resp = client.get("/")
         assert resp.status_code == 200
@@ -27,8 +23,8 @@ class TestRoot:
 
 # ── POST /connect_config ─────────────────────────────────────────────────────
 
-class TestPostConnectConfig:
 
+class TestPostConnectConfig:
     def test_set_single_value(self, client, store_with_secret):
         resp = client.post("/connect_config", json={"netbox_url": "http://nb:8000"})
         assert resp.status_code == 200
@@ -69,8 +65,8 @@ class TestPostConnectConfig:
 
 # ── GET /connect_config ──────────────────────────────────────────────────────
 
-class TestGetConnectConfig:
 
+class TestGetConnectConfig:
     def test_returns_only_public_keys(self, client, store_with_secret):
         store_with_secret.set_config("netbox_url", "http://nb")
         store_with_secret.set_config("netbox_token", "secret_token")
@@ -96,8 +92,8 @@ class TestGetConnectConfig:
 
 # ── POST /sync_config ────────────────────────────────────────────────────────
 
-class TestPostSyncConfig:
 
+class TestPostSyncConfig:
     def test_set_sync_config(self, client, store_with_secret):
         payload = {"config": {"clustering": "true", "template_cf": "zbx_tpl"}}
         resp = client.post("/sync_config", json=payload)
@@ -119,9 +115,11 @@ class TestPostSyncConfig:
     def test_sync_config_invalidates_instance(self, client, store_with_secret):
         """Updating sync config should invalidate the cached Sync instance."""
         import app.routes as routes
+
         manager = routes._sync_manager
+        assert manager is not None  # Type assertion for tests
         # Set up fake cached state
-        manager._instance = "fake_instance"
+        manager._instance = "fake_instance"  # type: ignore[assignment]
         manager._config_cache = {"old": "val"}
 
         client.post("/sync_config", json={"config": {"new_key": "val"}})
@@ -131,8 +129,8 @@ class TestPostSyncConfig:
 
 # ── GET /sync_config ─────────────────────────────────────────────────────────
 
-class TestGetSyncConfig:
 
+class TestGetSyncConfig:
     def test_get_sync_config(self, client, store_with_secret):
         store_with_secret.set_sync_config("clustering", "true")
         resp = client.get("/sync_config")
@@ -147,8 +145,8 @@ class TestGetSyncConfig:
 
 # ── DELETE /sync_config/{key} ────────────────────────────────────────────────
 
-class TestDeleteSyncConfig:
 
+class TestDeleteSyncConfig:
     def test_delete_existing_key(self, client, store_with_secret):
         store_with_secret.set_sync_config("to_delete", "val")
         resp = client.delete("/sync_config/to_delete")
@@ -162,9 +160,11 @@ class TestDeleteSyncConfig:
 
     def test_delete_invalidates_instance(self, client, store_with_secret):
         import app.routes as routes
+
         manager = routes._sync_manager
+        assert manager is not None  # Type assertion for tests
         store_with_secret.set_sync_config("k", "v")
-        manager._instance = "fake"
+        manager._instance = "fake"  # type: ignore[assignment]
         manager._config_cache = {"k": "v"}
 
         client.delete("/sync_config/k")
@@ -173,8 +173,8 @@ class TestDeleteSyncConfig:
 
 # ── POST /sync ───────────────────────────────────────────────────────────────
 
-class TestSyncEndpoint:
 
+class TestSyncEndpoint:
     def test_sync_returns_accepted(self, client):
         resp = client.post("/sync", json={"device_filter": {"name": "SW01"}})
         assert resp.status_code == 200
