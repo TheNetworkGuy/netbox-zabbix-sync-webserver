@@ -41,7 +41,9 @@ async def lifespan(app: FastAPI):
     else:
         warn_if_missing_secret()
     yield
-    # Shutdown (nothing to do)
+    # Shutdown
+    logger.info("Shutting down webserver...")
+    sync_manager.cleanup()
 
 
 app = FastAPI(lifespan=lifespan)

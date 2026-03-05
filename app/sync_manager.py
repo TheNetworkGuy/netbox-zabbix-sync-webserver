@@ -1,6 +1,9 @@
 """Sync instance management with caching."""
+
 import logging
+
 from netbox_zabbix_sync import Sync
+
 from app.token_store import SecretStore
 
 logger = logging.getLogger(__name__)
@@ -81,7 +84,10 @@ class SyncManager:
             zbx_auth_pass = None if use_token_auth else zbx_pass
             zbx_auth_token = zbx_token if use_token_auth else None
 
-            logger.debug("Using auth type %s for Zabbix connection", "token" if use_token_auth else "user/pass")
+            logger.debug(
+                "Using auth type %s for Zabbix connection",
+                "token" if use_token_auth else "user/pass",
+            )
 
             logger.info(
                 "(Re)connecting Sync instance to Netbox/Zabbix",
@@ -115,3 +121,16 @@ class SyncManager:
     def invalidate_connection(self) -> None:
         """Invalidate the cached Sync connection, forcing reconnect on next use."""
         self._connection_cache = None
+
+    def cleanup(self) -> None:
+        """Clean up resources by logging out of Zabbix session."""
+        if self._instance is not None:
+            try:
+                logger.info("Logging out of Zabbix session")
+                self._instance.logout()
+            except Exception as exc:
+                logger.error("Error during Zabbix logout: %s", exc)
+            finally:
+                self._instance = None
+                self._config_cache = None
+                self._connection_cache = None

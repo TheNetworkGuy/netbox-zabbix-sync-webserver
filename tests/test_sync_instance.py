@@ -9,14 +9,15 @@ Covers:
 - connect() re-called when connection config changes
 - connect() NOT re-called on duplicate /sync with same config
 """
-from unittest.mock import MagicMock, patch, call
+
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 
 from app.sync_manager import SyncManager
 
-
 # ── Helper ────────────────────────────────────────────────────────────────────
+
 
 def _patch_sync_class():
     """Patch the Sync class used inside sync_manager so no real connections happen."""
@@ -25,8 +26,8 @@ def _patch_sync_class():
 
 # ── 3. connect() not called when connection details are missing ──────────────
 
-class TestConnectNotCalledWithoutConfig:
 
+class TestConnectNotCalledWithoutConfig:
     def test_missing_netbox_url(self, store_with_secret):
         """connect() must NOT be called when netbox_url is missing."""
         manager = SyncManager(store_with_secret)
@@ -78,8 +79,8 @@ class TestConnectNotCalledWithoutConfig:
 
 # ── 4a. connect() auth selection ──────────────────────────────────────────────
 
-class TestConnectAuthSelection:
 
+class TestConnectAuthSelection:
     def test_connect_with_username_password(self, store_with_secret):
         """When only user/pass are set, connect() gets user+pass, token=None."""
         manager = SyncManager(store_with_secret)
@@ -152,15 +153,19 @@ class TestConnectAuthSelection:
 
 # ── 4b. Reconnect / cache behaviour ──────────────────────────────────────────
 
-class TestSyncInstanceCaching:
 
+class TestSyncInstanceCaching:
     def test_same_config_does_not_reconnect(self, store_with_secret):
         """Calling with identical config twice should only connect() once."""
         manager = SyncManager(store_with_secret)
 
         kwargs = dict(
-            nb_url="http://nb", nb_token="nbt", zbx_url="http://zbx",
-            zbx_user="Admin", zbx_pass="pass", zbx_token=None,
+            nb_url="http://nb",
+            nb_token="nbt",
+            zbx_url="http://zbx",
+            zbx_user="Admin",
+            zbx_pass="pass",
+            zbx_token=None,
         )
         with _patch_sync_class() as MockSync:
             instance = MockSync.return_value
@@ -176,12 +181,20 @@ class TestSyncInstanceCaching:
             instance = MockSync.return_value
 
             manager.get_or_create_sync_instance(
-                nb_url="http://nb", nb_token="nbt", zbx_url="http://zbx",
-                zbx_user="Admin", zbx_pass="pass1", zbx_token=None,
+                nb_url="http://nb",
+                nb_token="nbt",
+                zbx_url="http://zbx",
+                zbx_user="Admin",
+                zbx_pass="pass1",
+                zbx_token=None,
             )
             manager.get_or_create_sync_instance(
-                nb_url="http://nb", nb_token="nbt", zbx_url="http://zbx",
-                zbx_user="Admin", zbx_pass="pass2", zbx_token=None,
+                nb_url="http://nb",
+                nb_token="nbt",
+                zbx_url="http://zbx",
+                zbx_user="Admin",
+                zbx_pass="pass2",
+                zbx_token=None,
             )
             assert instance.connect.call_count == 2
 
@@ -190,8 +203,12 @@ class TestSyncInstanceCaching:
         manager = SyncManager(store_with_secret)
 
         kwargs = dict(
-            nb_url="http://nb", nb_token="nbt", zbx_url="http://zbx",
-            zbx_user="Admin", zbx_pass="pass", zbx_token=None,
+            nb_url="http://nb",
+            nb_token="nbt",
+            zbx_url="http://zbx",
+            zbx_user="Admin",
+            zbx_pass="pass",
+            zbx_token=None,
         )
         with _patch_sync_class() as MockSync:
             instance = MockSync.return_value
@@ -207,8 +224,12 @@ class TestSyncInstanceCaching:
         manager = SyncManager(store_with_secret)
 
         kwargs = dict(
-            nb_url="http://nb", nb_token="nbt", zbx_url="http://zbx",
-            zbx_user="Admin", zbx_pass="pass", zbx_token=None,
+            nb_url="http://nb",
+            nb_token="nbt",
+            zbx_url="http://zbx",
+            zbx_user="Admin",
+            zbx_pass="pass",
+            zbx_token=None,
         )
         with _patch_sync_class() as MockSync:
             manager.get_or_create_sync_instance(**kwargs)
@@ -224,8 +245,12 @@ class TestSyncInstanceCaching:
         manager = SyncManager(store_with_secret)
 
         kwargs = dict(
-            nb_url="http://nb", nb_token="nbt", zbx_url="http://zbx",
-            zbx_user="Admin", zbx_pass="pass", zbx_token=None,
+            nb_url="http://nb",
+            nb_token="nbt",
+            zbx_url="http://zbx",
+            zbx_user="Admin",
+            zbx_pass="pass",
+            zbx_token=None,
         )
         with _patch_sync_class() as MockSync:
             instance = MockSync.return_value
@@ -237,3 +262,90 @@ class TestSyncInstanceCaching:
             manager.get_or_create_sync_instance(**kwargs)
             assert MockSync.call_count == 2
             assert instance.connect.call_count == 2
+
+
+# ── 6. cleanup() properly logs out and clears cache ──────────────────────────
+
+
+class TestCleanup:
+    def test_cleanup_calls_logout_when_instance_exists(self, store_with_secret):
+        """cleanup() should call logout() on the Sync instance."""
+        manager = SyncManager(store_with_secret)
+
+        kwargs = dict(
+            nb_url="http://nb",
+            nb_token="nbt",
+            zbx_url="http://zbx",
+            zbx_user="Admin",
+            zbx_pass="pass",
+            zbx_token=None,
+        )
+        with _patch_sync_class() as MockSync:
+            instance = MockSync.return_value
+            manager.get_or_create_sync_instance(**kwargs)
+
+            manager.cleanup()
+
+            instance.logout.assert_called_once()
+
+    def test_cleanup_clears_all_caches(self, store_with_secret):
+        """cleanup() should clear instance, config_cache, and connection_cache."""
+        manager = SyncManager(store_with_secret)
+
+        kwargs = dict(
+            nb_url="http://nb",
+            nb_token="nbt",
+            zbx_url="http://zbx",
+            zbx_user="Admin",
+            zbx_pass="pass",
+            zbx_token=None,
+        )
+        with _patch_sync_class() as MockSync:
+            manager.get_or_create_sync_instance(**kwargs)
+
+            # Verify caches are populated
+            assert manager._instance is not None
+            assert manager._config_cache is not None
+            assert manager._connection_cache is not None
+
+            manager.cleanup()
+
+            # Verify all caches are cleared
+            assert manager._instance is None
+            assert manager._config_cache is None
+            assert manager._connection_cache is None
+
+    def test_cleanup_handles_logout_exception(self, store_with_secret):
+        """cleanup() should handle exceptions during logout gracefully."""
+        manager = SyncManager(store_with_secret)
+
+        kwargs = dict(
+            nb_url="http://nb",
+            nb_token="nbt",
+            zbx_url="http://zbx",
+            zbx_user="Admin",
+            zbx_pass="pass",
+            zbx_token=None,
+        )
+        with _patch_sync_class() as MockSync:
+            instance = MockSync.return_value
+            instance.logout.side_effect = RuntimeError("Logout failed")
+
+            manager.get_or_create_sync_instance(**kwargs)
+
+            # Should not raise, even though logout() fails
+            manager.cleanup()
+
+            # Caches should still be cleared despite the exception
+            assert manager._instance is None
+            assert manager._config_cache is None
+            assert manager._connection_cache is None
+
+    def test_cleanup_does_nothing_when_no_instance(self, store_with_secret):
+        """cleanup() should handle being called when no instance exists."""
+        manager = SyncManager(store_with_secret)
+
+        # Should not raise when called with no instance
+        manager.cleanup()
+
+        assert manager._instance is None
