@@ -29,6 +29,11 @@ A FastAPI-based webhook server that receives events and triggers synchronization
 2. Install dependencies with uv:
    ```bash
    pip install uv
+   
+   # For running the server only:
+   uv sync --no-dev
+   
+   # For development (includes testing tools):
    uv sync --dev
    ```
 
