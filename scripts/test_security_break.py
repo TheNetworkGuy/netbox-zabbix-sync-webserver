@@ -25,6 +25,13 @@ import time
 import json
 import uuid
 from typing import Optional
+from pathlib import Path
+
+# Add project root to path for importing app modules
+PROJECT_DIR = Path(__file__).resolve().parent.parent
+if str(PROJECT_DIR) not in sys.path:
+    sys.path.insert(0, str(PROJECT_DIR))
+
 from app.token_store import store, SecretStoreError
 
 
