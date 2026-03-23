@@ -10,6 +10,8 @@ Covers:
 - POST /sync            (accepted, background task scheduled)
 """
 
+import json
+
 
 # ── Root ──────────────────────────────────────────────────────────────────────
 
@@ -84,6 +86,41 @@ class TestGetConnectConfig:
         assert "netbox_token" not in cfg
         assert "zabbix_password" not in cfg
 
+    def test_include_secrets_returns_all_keys(self, client, store_with_secret):
+        store_with_secret.set_config("netbox_url", "http://nb")
+        store_with_secret.set_config("netbox_token", "secret_token")
+        store_with_secret.set_config("zabbix_url", "http://zbx")
+        store_with_secret.set_config("zabbix_user", "Admin")
+        store_with_secret.set_config("zabbix_password", "pass")
+        store_with_secret.set_config("zabbix_token", "zbx_tok")
+
+        resp = client.get("/connect_config", params={"include_secrets": "true"})
+        assert resp.status_code == 200
+        cfg = resp.json()["config"]
+        assert cfg["netbox_url"] == "http://nb"
+        assert cfg["netbox_token"] == "secret_token"
+        assert cfg["zabbix_url"] == "http://zbx"
+        assert cfg["zabbix_user"] == "Admin"
+        assert cfg["zabbix_password"] == "pass"
+        assert cfg["zabbix_token"] == "zbx_tok"
+
+    def test_include_secrets_false_hides_sensitive(self, client, store_with_secret):
+        store_with_secret.set_config("netbox_url", "http://nb")
+        store_with_secret.set_config("zabbix_password", "pass")
+
+        resp = client.get("/connect_config", params={"include_secrets": "false"})
+        assert resp.status_code == 200
+        cfg = resp.json()["config"]
+        assert "netbox_url" in cfg
+        assert "zabbix_password" not in cfg
+
+    def test_include_secrets_defaults_to_false(self, client, store_with_secret):
+        store_with_secret.set_config("zabbix_password", "pass")
+
+        resp = client.get("/connect_config")
+        assert resp.status_code == 200
+        assert "zabbix_password" not in resp.json()["config"]
+
     def test_empty_config(self, client):
         resp = client.get("/connect_config")
         assert resp.status_code == 200
@@ -125,6 +162,22 @@ class TestPostSyncConfig:
         client.post("/sync_config", json={"config": {"new_key": "val"}})
         assert manager._instance is None
         assert manager._config_cache is None
+
+    def test_sync_config_serializes_dict_values(self, client, store_with_secret):
+        payload = {"config": {"nb_device_filter": {"name__n": "null"}}}
+        resp = client.post("/sync_config", json=payload)
+        assert resp.status_code == 200
+
+        raw_value = store_with_secret.get_sync_config("nb_device_filter")
+        assert raw_value == json.dumps({"name__n": "null"})
+
+    def test_sync_config_serializes_list_values(self, client, store_with_secret):
+        payload = {"config": {"zabbix_device_disable": ["Offline", "Planned"]}}
+        resp = client.post("/sync_config", json=payload)
+        assert resp.status_code == 200
+
+        raw_value = store_with_secret.get_sync_config("zabbix_device_disable")
+        assert raw_value == json.dumps(["Offline", "Planned"])
 
 
 # ── GET /sync_config ─────────────────────────────────────────────────────────

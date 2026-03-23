@@ -1,5 +1,7 @@
 """Pydantic models for API request/response schemas."""
 
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -33,7 +35,7 @@ class ConnectionConfigResponse(BaseModel):
 class SyncConfigPayload(BaseModel):
     """Schema for sync configuration updates."""
 
-    config: dict[str, str] = Field(..., description="Sync configuration key-value pairs")
+    config: dict[str, Any] = Field(..., description="Sync configuration key-value pairs")
 
 
 class SyncConfigResponse(BaseModel):

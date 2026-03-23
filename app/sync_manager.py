@@ -1,5 +1,6 @@
 """Sync instance management with caching."""
 
+import json
 import logging
 
 from netbox_zabbix_sync import Sync
@@ -10,7 +11,14 @@ logger = logging.getLogger(__name__)
 
 
 def convert_config_types(config_raw: dict) -> dict:
-    """Convert string configuration values to appropriate Python types."""
+    """Convert string configuration values to appropriate Python types.
+
+    The database stores all sync config values as strings. This function
+    converts them back to the types expected by the Sync class:
+    - "true"/"false" → bool
+    - digit strings → int
+    - JSON objects/arrays → dict/list (e.g. nb_device_filter, device_inventory_map)
+    """
     converted = {}
     for key, value in config_raw.items():
         # Skip non-string values
@@ -23,6 +31,12 @@ def convert_config_types(config_raw: dict) -> dict:
         # Try to convert to int
         elif value.isdigit():
             converted[key] = int(value)
+        # Try to parse JSON objects/arrays (dicts and lists)
+        elif value.startswith(("{", "[")):
+            try:
+                converted[key] = json.loads(value)
+            except (json.JSONDecodeError, ValueError):
+                converted[key] = value
         else:
             converted[key] = value
     return converted

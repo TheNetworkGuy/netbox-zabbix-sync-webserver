@@ -1,5 +1,6 @@
 """FastAPI route definitions."""
 
+import json
 import logging
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, status
 
@@ -202,20 +203,28 @@ async def patch_connection_config(
 async def get_connection_config(
     security_info: dict = Depends(webhook_security_dependency),
     store: SecretStore = Depends(get_store),
+    include_secrets: bool = False,
 ) -> dict:
     """
-    Retrieve current connection configuration (public values only).
+    Retrieve current connection configuration.
 
-    Requires webhook authentication. Returns URLs and usernames but NOT tokens/passwords.
+    Requires webhook authentication. By default returns URLs and usernames only.
+    Pass ?include_secrets=true to also return tokens and passwords.
     """
     logger.info(
-        "Connection config retrieval from %s (event %s)",
+        "Connection config retrieval from %s (event %s, include_secrets=%s)",
         security_info["client_ip"],
         security_info["event_id"],
+        include_secrets,
     )
 
     try:
         config = store.get_all_config()
+        if include_secrets:
+            return {
+                "status": "success",
+                "config": config,
+            }
         # Return only non-sensitive values
         public_config = {
             key: value
@@ -225,7 +234,8 @@ async def get_connection_config(
         return {
             "status": "success",
             "config": public_config,
-            "note": "Sensitive values (tokens, passwords) are not returned for security",
+            "note": "Sensitive values (tokens, passwords) are not returned for security. "
+            "Use ?include_secrets=true to include them.",
         }
     except SecretStoreError as exc:
         logger.error("Failed to retrieve configuration: %s", exc)
@@ -277,7 +287,11 @@ async def update_sync_config(
 
     try:
         for key, value in payload.config.items():
-            store.set_sync_config(key, str(value))
+            if isinstance(value, (dict, list)):
+                serialized_value = json.dumps(value)
+            else:
+                serialized_value = str(value)
+            store.set_sync_config(key, serialized_value)
             updated_keys.append(key)
 
         # Invalidate cached Sync instance since config changed
