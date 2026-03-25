@@ -600,16 +600,16 @@ wheels = [
 
 [[package]]
 name = "netbox-zabbix-sync"
-version = "4.0.1b1"
+version = "4.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "igraph" },
     { name = "pynetbox" },
     { name = "zabbix-utils" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/98/ab/257e648fe7b48d6ac27dd0e8201000cab8f9f32e9990448d64c92815f0ba/netbox_zabbix_sync-4.0.1b1.tar.gz", hash = "sha256:d23523acd39c4417365b191c1c256aa384014d3cfc8aecd258de42213a096aaa", size = 93694, upload-time = "2026-02-27T18:23:23.428Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c6/68/72dafcf122c481f0d9e7d2d6342435a6056d1aadaa80d384d3f34baca071/netbox_zabbix_sync-4.0.1.tar.gz", hash = "sha256:8e28bd122d38963a066dc9a089c0652cb57da9f6a0ef147edf1ab8d10c8e3f20", size = 94495, upload-time = "2026-03-25T09:09:10.579Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9e/94/22cf962426bb61e0fa3b9e2489b275019361a0a0eb5c4daa444f298b205f/netbox_zabbix_sync-4.0.1b1-py3-none-any.whl", hash = "sha256:26465055c9284c38bf8d3d88833dbedfb470960b3408087fdfc7052eceb237d1", size = 42331, upload-time = "2026-02-27T18:23:22.406Z" },
+    { url = "https://files.pythonhosted.org/packages/40/d9/fc36e6e30fb381580f8270230db2ce4735a33d0cc457307dab0a917fafce/netbox_zabbix_sync-4.0.1-py3-none-any.whl", hash = "sha256:31555d99158156970c293f6aba4f7d71d14035a2b736a37eb84a44cefcbcc726", size = 42531, upload-time = "2026-03-25T09:09:09.397Z" },
 ]
 
 [[package]]
@@ -637,7 +637,7 @@ dev = [
 requires-dist = [
     { name = "cryptography", specifier = ">=41.0.0" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.129.0" },
-    { name = "netbox-zabbix-sync", specifier = "==4.0.1b1" },
+    { name = "netbox-zabbix-sync", specifier = ">=4.0.1" },
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30.0" },
 ]

@@ -5,7 +5,7 @@ description = "FastAPI webhook server for triggering NetBox-Zabbix synchronizati
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "netbox-zabbix-sync==4.0.1b1",
+    "netbox-zabbix-sync>=4.0.1",
     "fastapi[standard]>=0.129.0",
     "uvicorn[standard]>=0.30.0",
     "pydantic>=2.0.0",
